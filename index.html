@@ -81,15 +81,14 @@
 
         /* Botão Voltar */
         .btn-voltar {
-            position: fixed;
-            top: 20px;
-            left: 20px;
             background: #666;
             color: white;
             padding: 8px 15px;
             border-radius: 5px;
             text-decoration: none;
-            z-index: 1000;
+            text-align: center;
+            width: 100%;
+            margin-top: 10px;
         }
 
         /* Estilos específicos da página de controle */
@@ -268,10 +267,61 @@
             100% { transform: translateY(0) rotate(0deg); }
         }
 
-        @media (min-width: 600px) {
-            .form-gasto {
-                grid-template-columns: repeat(4, 1fr);
+        /* Ajustes para mobile */
+        @media (max-width: 600px) {
+            .pagina-controle {
+                padding: 10px;
             }
+
+            .form-gasto {
+                grid-template-columns: 1fr;
+            }
+
+            .btn-voltar {
+                position: static;
+                margin: 10px auto;
+                display: block;
+                width: 90%;
+                text-align: center;
+                order: 1;
+            }
+
+            #resetar {
+                order: 2;
+                margin-top: 10px;
+            }
+
+            table {
+                font-size: 14px;
+                overflow-x: auto;
+                display: block;
+            }
+
+            th, td {
+                padding: 8px;
+                min-width: 100px;
+            }
+
+            .btn-editar, .btn-excluir {
+                font-size: 14px;
+                padding: 3px 6px;
+            }
+
+            .logo {
+                font-size: 1.8em;
+            }
+
+            .selecionar-perfil {
+                padding: 15px;
+            }
+        }
+
+        /* Novo container para botões inferiores */
+        .botoes-inferiores {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
         }
     </style>
 </head>
@@ -329,7 +379,10 @@
             </tbody>
         </table>
 
-        <button id="resetar" onclick="resetarDados()">Resetar</button>
+        <div class="botoes-inferiores">
+            <button id="resetar" onclick="resetarDados()">Resetar</button>
+            <a class="btn-voltar" href="javascript:void(0)" onclick="voltarParaInicio()">← Voltar</a>
+        </div>
     </div>
 
     <script>
@@ -360,22 +413,13 @@
         function carregarControle(perfil) {
             document.getElementById('perfil').value = perfil;
             document.body.className = perfil.toLowerCase();
-            criarBotaoVoltar();
             inicializarControle();
         }
 
-        function criarBotaoVoltar() {
-            const btn = document.createElement('a');
-            btn.className = 'btn-voltar';
-            btn.innerHTML = '← Voltar';
-            btn.href = 'javascript:void(0)';
-            btn.onclick = () => {
-                document.getElementById('paginaInicial').style.display = 'flex';
-                document.getElementById('paginaControle').style.display = 'none';
-                document.body.className = '';
-                btn.remove();
-            }
-            document.body.appendChild(btn);
+        function voltarParaInicio() {
+            document.getElementById('paginaInicial').style.display = 'flex';
+            document.getElementById('paginaControle').style.display = 'none';
+            document.body.className = '';
         }
 
         // Controle de Gastos
@@ -527,4 +571,4 @@
         carregarControle(perfilAtual);
     </script>
 </body>
-</html>
+</html

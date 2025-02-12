@@ -181,6 +181,19 @@
             width: 100%;
         }
 
+        /* Botões de ação */
+        .btn-editar, .btn-excluir {
+            padding: 5px 10px;
+            margin: 0 2px;
+            border: none;
+            cursor: pointer;
+            background: none;
+            font-size: 16px;
+        }
+
+        .btn-editar:hover { color: #4CAF50; }
+        .btn-excluir:hover { color: #f44336; }
+
         /* Tema Bárbara */
         body.barbara {
             background-color: #fff0f5;
@@ -309,6 +322,7 @@
                     <th>Item</th>
                     <th>Valor</th>
                     <th>Data</th>
+                    <th>Ações</th>
                 </tr>
             </thead>
             <tbody>
@@ -319,6 +333,22 @@
     </div>
 
     <script>
+        // Variáveis globais
+        let perfilAtual = 'Pedro';
+        let dados = {
+            Pedro: {
+                gastos: JSON.parse(localStorage.getItem('Pedro_gastos')) || [],
+                salario: parseFloat(localStorage.getItem('Pedro_salario')) || 0
+            },
+            Barbara: {
+                gastos: JSON.parse(localStorage.getItem('Barbara_gastos')) || [],
+                salario: parseFloat(localStorage.getItem('Barbara_salario')) || 0
+            }
+        };
+
+        let editando = false;
+        let indiceEdicao = -1;
+
         // Sistema de Navegação
         function acessarControle() {
             const perfil = document.getElementById('selecaoPerfil').value;
@@ -350,114 +380,151 @@
 
         // Controle de Gastos
         function inicializarControle() {
-            let perfilAtual = document.getElementById('perfil').value;
-            let dados = {
-                Pedro: {
-                    gastos: JSON.parse(localStorage.getItem('Pedro_gastos')) || [],
-                    salario: parseFloat(localStorage.getItem('Pedro_salario')) || 0
-                },
-                Barbara: {
-                    gastos: JSON.parse(localStorage.getItem('Barbara_gastos')) || [],
-                    salario: parseFloat(localStorage.getItem('Barbara_salario')) || 0
-                }
-            };
-
             document.getElementById('salario').value = dados[perfilAtual].salario;
             atualizarTabela();
             atualizarSaldo();
 
             document.getElementById('data').value = new Date().toISOString().split('T')[0];
+        }
 
-            function adicionarGasto() {
-                const item = document.getElementById('item').value;
-                const valor = parseFloat(document.getElementById('valor').value);
-                const data = document.getElementById('data').value;
+        function adicionarGasto() {
+            const item = document.getElementById('item').value;
+            const valor = parseFloat(document.getElementById('valor').value);
+            const data = document.getElementById('data').value;
 
-                if (!item || isNaN(valor) || !data) {
-                    alert('Preencha todos os campos!');
-                    return;
-                }
+            if (!item || isNaN(valor) || !data) {
+                alert('Preencha todos os campos!');
+                return;
+            }
 
+            if (editando) {
+                salvarEdicao(indiceEdicao);
+            } else {
                 dados[perfilAtual].gastos.push({ item, valor, data });
-                dados[perfilAtual].salario = parseFloat(document.getElementById('salario').value);
-                
                 salvarDados();
                 atualizarTabela();
                 atualizarSaldo();
                 limparCampos();
             }
+        }
 
-            function atualizarTabela() {
-                const tbody = document.querySelector('#tabelaGastos tbody');
-                tbody.innerHTML = '';
-                
-                dados[perfilAtual].gastos.forEach(gasto => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${gasto.item}</td>
-                        <td>R$ ${gasto.valor.toFixed(2)}</td>
-                        <td>${gasto.data}</td>
-                    `;
-                    tbody.appendChild(row);
-                });
+        function editarGasto(index) {
+            const gasto = dados[perfilAtual].gastos[index];
+            
+            document.getElementById('item').value = gasto.item;
+            document.getElementById('valor').value = gasto.valor;
+            document.getElementById('data').value = gasto.data;
+            
+            const btnAplicar = document.querySelector('.form-gasto button');
+            btnAplicar.textContent = 'Salvar Edição';
+            btnAplicar.onclick = () => salvarEdicao(index);
+            
+            editando = true;
+            indiceEdicao = index;
+        }
+
+        function salvarEdicao(index) {
+            const item = document.getElementById('item').value;
+            const valor = parseFloat(document.getElementById('valor').value);
+            const data = document.getElementById('data').value;
+
+            if (!item || isNaN(valor) || !data) {
+                alert('Preencha todos os campos!');
+                return;
             }
 
-            function atualizarSaldo() {
-                const salario = parseFloat(document.getElementById('salario').value) || 0;
-                const totalGastos = dados[perfilAtual].gastos.reduce((acc, gasto) => acc + gasto.valor, 0);
-                const saldo = salario - totalGastos;
+            dados[perfilAtual].gastos[index] = { item, valor, data };
+            
+            const btnAplicar = document.querySelector('.form-gasto button');
+            btnAplicar.textContent = 'Aplicar';
+            btnAplicar.onclick = adicionarGasto;
+            
+            editando = false;
+            indiceEdicao = -1;
+            
+            salvarDados();
+            atualizarTabela();
+            atualizarSaldo();
+            limparCampos();
+        }
 
-                document.getElementById('valorSaldo').textContent = saldo.toFixed(2);
-
-                const saldoElement = document.getElementById('saldo');
-                let intensidadeVermelho = 0;
-                
-                if (saldo <= 200) {
-                    intensidadeVermelho = 100;
-                } else {
-                    intensidadeVermelho = Math.max(0, 100 - ((saldo - 200) / 2));
-                }
-                
-                saldoElement.style.backgroundColor = `hsl(0, ${intensidadeVermelho}%, 50%)`;
-            }
-
-            function resetarDados() {
-                if (confirm('Tem certeza que deseja resetar todos os dados deste perfil?')) {
-                    dados[perfilAtual].gastos = [];
-                    dados[perfilAtual].salario = 0;
-                    document.getElementById('salario').value = '';
-                    salvarDados();
-                    atualizarTabela();
-                    atualizarSaldo();
-                }
-            }
-
-            function salvarDados() {
-                localStorage.setItem(`${perfilAtual}_gastos`, JSON.stringify(dados[perfilAtual].gastos));
-                localStorage.setItem(`${perfilAtual}_salario`, dados[perfilAtual].salario);
-            }
-
-            function limparCampos() {
-                document.getElementById('item').value = '';
-                document.getElementById('valor').value = '';
-                document.getElementById('data').value = new Date().toISOString().split('T')[0];
-            }
-
-            document.getElementById('salario').addEventListener('change', () => {
-                dados[perfilAtual].salario = parseFloat(document.getElementById('salario').value);
+        function excluirGasto(index) {
+            if (confirm('Tem certeza que deseja excluir este gasto?')) {
+                dados[perfilAtual].gastos.splice(index, 1);
                 salvarDados();
-                atualizarSaldo();
-            });
-
-            window.adicionarGasto = adicionarGasto;
-            window.resetarDados = resetarDados;
-            window.carregarPerfil = () => {
-                perfilAtual = document.getElementById('perfil').value;
-                document.body.className = perfilAtual.toLowerCase();
                 atualizarTabela();
                 atualizarSaldo();
-            };
+            }
         }
+
+        function atualizarTabela() {
+            const tbody = document.querySelector('#tabelaGastos tbody');
+            tbody.innerHTML = '';
+            
+            dados[perfilAtual].gastos.forEach((gasto, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${gasto.item}</td>
+                    <td>R$ ${gasto.valor.toFixed(2)}</td>
+                    <td>${gasto.data}</td>
+                    <td>
+                        <button class="btn-editar" onclick="editarGasto(${index})">✏️</button>
+                        <button class="btn-excluir" onclick="excluirGasto(${index})">❌</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function atualizarSaldo() {
+            const salario = parseFloat(document.getElementById('salario').value) || 0;
+            const totalGastos = dados[perfilAtual].gastos.reduce((acc, gasto) => acc + gasto.valor, 0);
+            const saldo = salario - totalGastos;
+
+            document.getElementById('valorSaldo').textContent = saldo.toFixed(2);
+
+            const saldoElement = document.getElementById('saldo');
+            let intensidadeVermelho = 0;
+            
+            if (saldo <= 200) {
+                intensidadeVermelho = 100;
+            } else {
+                intensidadeVermelho = Math.max(0, 100 - ((saldo - 200) / 2));
+            }
+            
+            saldoElement.style.backgroundColor = `hsl(0, ${intensidadeVermelho}%, 50%)`;
+        }
+
+        function resetarDados() {
+            if (confirm('Tem certeza que deseja resetar todos os dados deste perfil?')) {
+                dados[perfilAtual].gastos = [];
+                dados[perfilAtual].salario = 0;
+                document.getElementById('salario').value = '';
+                salvarDados();
+                atualizarTabela();
+                atualizarSaldo();
+            }
+        }
+
+        function salvarDados() {
+            localStorage.setItem(`${perfilAtual}_gastos`, JSON.stringify(dados[perfilAtual].gastos));
+            localStorage.setItem(`${perfilAtual}_salario`, dados[perfilAtual].salario);
+        }
+
+        function limparCampos() {
+            document.getElementById('item').value = '';
+            document.getElementById('valor').value = '';
+            document.getElementById('data').value = new Date().toISOString().split('T')[0];
+        }
+
+        document.getElementById('salario').addEventListener('change', () => {
+            dados[perfilAtual].salario = parseFloat(document.getElementById('salario').value);
+            salvarDados();
+            atualizarSaldo();
+        });
+
+        // Carregar perfil inicial
+        carregarControle(perfilAtual);
     </script>
 </body>
 </html>

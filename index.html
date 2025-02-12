@@ -23,7 +23,6 @@
         body {
             font-family: 'Segoe UI', sans-serif;
             min-height: 100vh;
-            background-color: white; /* Fundo branco padrão */
         }
 
         /* Página Inicial */
@@ -230,7 +229,7 @@
 
         /* Tema Pedro */
         body.pedro {
-            background-color: white; /* Fundo branco */
+            background-color: black;
         }
 
         body.pedro::before {
@@ -250,15 +249,15 @@
         }
 
         body.pedro button {
-            background-color: #ff4500; /* Botões laranja */
+            background-color: #ff4500;
         }
 
         body.pedro button:hover {
-            background-color: #ff6347; /* Botões laranja mais escuro */
+            background-color: #ff6347;
         }
 
         body.pedro #saldo {
-            background-color: #ff4500; /* Saldo laranja */
+            background-color: #ff4500;
         }
 
         /* Animações */
@@ -566,4 +565,10 @@
             dados[perfilAtual].salario = parseFloat(document.getElementById('salario').value);
             salvarDados();
             atualizarSaldo();
-        }
+        });
+
+        // Carregar perfil inicial
+        carregarControle(perfilAtual);
+    </script>
+</body>
+</html

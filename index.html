@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Controle de Gastos com Senha</title>
+    <title>Controle de Gastos</title>
     
     <!-- Ícones personalizados -->
     <link rel="shortcut icon" href="meu-icone.png" type="image/png">
@@ -23,7 +23,7 @@
         body {
             font-family: 'Segoe UI', sans-serif;
             min-height: 100vh;
-            background-color: white;
+            background-color: white; /* Fundo branco padrão */
         }
 
         /* Página Inicial */
@@ -230,7 +230,7 @@
 
         /* Tema Pedro */
         body.pedro {
-            background-color: white;
+            background-color: white; /* Fundo branco */
         }
 
         body.pedro::before {
@@ -250,15 +250,15 @@
         }
 
         body.pedro button {
-            background-color: #ff4500;
+            background-color: #ff4500; /* Botões laranja */
         }
 
         body.pedro button:hover {
-            background-color: #ff6347;
+            background-color: #ff6347; /* Botões laranja mais escuro */
         }
 
         body.pedro #saldo {
-            background-color: #ff4500;
+            background-color: #ff4500; /* Saldo laranja */
         }
 
         /* Animações */
@@ -266,53 +266,6 @@
             0% { transform: translateY(0) rotate(0deg); }
             50% { transform: translateY(-20px) rotate(10deg); }
             100% { transform: translateY(0) rotate(0deg); }
-        }
-
-        /* Modal de senha */
-        .modal-senha {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-
-        .conteudo-modal {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
-            width: 90%;
-            max-width: 300px;
-        }
-
-        .campo-senha {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            font-size: 20px;
-            text-align: center;
-            letter-spacing: 5px;
-        }
-
-        .teclado-numerico {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 5px;
-        }
-
-        .tecla-numero {
-            padding: 15px;
-            font-size: 20px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            cursor: pointer;
-            background: #f8f8f8;
         }
 
         /* Ajustes para mobile */
@@ -388,28 +341,6 @@
         </div>
     </div>
 
-    <!-- Modal de Senha -->
-    <div class="modal-senha" id="modalSenha">
-        <div class="conteudo-modal">
-            <h3 id="tituloModal">Digite a senha</h3>
-            <input type="password" id="campoSenha" class="campo-senha" maxlength="4" readonly>
-            <div class="teclado-numerico">
-                <button class="tecla-numero" data-numero="1">1</button>
-                <button class="tecla-numero" data-numero="2">2</button>
-                <button class="tecla-numero" data-numero="3">3</button>
-                <button class="tecla-numero" data-numero="4">4</button>
-                <button class="tecla-numero" data-numero="5">5</button>
-                <button class="tecla-numero" data-numero="6">6</button>
-                <button class="tecla-numero" data-numero="7">7</button>
-                <button class="tecla-numero" data-numero="8">8</button>
-                <button class="tecla-numero" data-numero="9">9</button>
-                <button class="tecla-numero" data-numero="0">0</button>
-                <button class="tecla-numero" id="apagar">⌫</button>
-            </div>
-            <p id="mensagemErro" style="color: red; display: none;">Senha incorreta!</p>
-        </div>
-    </div>
-
     <!-- Página de Controle -->
     <div class="pagina-controle" id="paginaControle">
         <div class="perfil-container">
@@ -457,117 +388,44 @@
 
     <script>
         // Variáveis globais
-        let perfilSelecionado = '';
-        let tentativasSenha = 0;
-
-        // Sistema de Senhas
-        function configurarTeclado() {
-            document.querySelectorAll('.tecla-numero').forEach(tecla => {
-                tecla.addEventListener('click', (e) => {
-                    const numero = e.target.dataset.numero;
-                    const senhaAtual = document.getElementById('campoSenha').value;
-                    
-                    if (numero && senhaAtual.length < 4) {
-                        document.getElementById('campoSenha').value += numero;
-                    }
-                });
-            });
-
-            document.getElementById('apagar').addEventListener('click', () => {
-                const senha = document.getElementById('campoSenha').value;
-                document.getElementById('campoSenha').value = senha.slice(0, -1);
-            });
-        }
-
-        function verificarSenha(perfil) {
-            const senhaSalva = localStorage.getItem(`${perfil}_pin`);
-            
-            if (!senhaSalva) {
-                definirNovaSenha(perfil);
-                return;
+        let perfilAtual = 'Pedro';
+        let dados = {
+            Pedro: {
+                gastos: JSON.parse(localStorage.getItem('Pedro_gastos')) || [],
+                salario: parseFloat(localStorage.getItem('Pedro_salario')) || 0
+            },
+            Barbara: {
+                gastos: JSON.parse(localStorage.getItem('Barbara_gastos')) || [],
+                salario: parseFloat(localStorage.getItem('Barbara_salario')) || 0
             }
+        };
 
-            exibirModalSenha(perfil, false);
-        }
+        let editando = false;
+        let indiceEdicao = -1;
 
-        function definirNovaSenha(perfil) {
-            exibirModalSenha(perfil, true);
-        }
-
-        function exibirModalSenha(perfil, novaSenha) {
-            perfilSelecionado = perfil;
-            document.getElementById('modalSenha').style.display = 'flex';
-            document.getElementById('tituloModal').textContent = novaSenha 
-                ? `Crie uma senha de 4 dígitos para ${perfil}`
-                : `Digite a senha de ${perfil}`;
-            document.getElementById('campoSenha').value = '';
-            document.getElementById('mensagemErro').style.display = 'none';
-            configurarTeclado();
-
-            const modal = document.getElementById('modalSenha');
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    cancelarAcesso();
-                }
-            });
-
-            document.getElementById('campoSenha').addEventListener('input', (e) => {
-                if (e.target.value.length === 4) {
-                    validarSenha(novaSenha);
-                }
-            });
-        }
-
-        function validarSenha(novaSenha) {
-            const senhaInserida = document.getElementById('campoSenha').value;
-            
-            if (novaSenha) {
-                localStorage.setItem(`${perfilSelecionado}_pin`, senhaInserida);
-                alert('Senha definida com sucesso!');
-                acessarPerfil();
-            } else {
-                const senhaCorreta = localStorage.getItem(`${perfilSelecionado}_pin`);
-                
-                if (senhaInserida === senhaCorreta) {
-                    acessarPerfil();
-                } else {
-                    tentativasSenha++;
-                    document.getElementById('mensagemErro').style.display = 'block';
-                    document.getElementById('campoSenha').value = '';
-                    
-                    if (tentativasSenha >= 3) {
-                        alert('Número máximo de tentativas excedido!');
-                        cancelarAcesso();
-                    }
-                }
-            }
-        }
-
-        function acessarPerfil() {
-            document.getElementById('modalSenha').style.display = 'none';
-            document.getElementById('paginaInicial').style.display = 'none';
-            document.getElementById('paginaControle').style.display = 'block';
-            carregarControle(perfilSelecionado);
-            tentativasSenha = 0;
-        }
-
-        function cancelarAcesso() {
-            document.getElementById('modalSenha').style.display = 'none';
-            document.getElementById('paginaInicial').style.display = 'flex';
-            document.getElementById('paginaControle').style.display = 'none';
-            perfilSelecionado = '';
-            tentativasSenha = 0;
-        }
-
-        // Modificar função de acesso
+        // Sistema de Navegação
         function acessarControle() {
             const perfil = document.getElementById('selecaoPerfil').value;
-            verificarSenha(perfil);
+            document.getElementById('paginaInicial').style.display = 'none';
+            document.getElementById('paginaControle').style.display = 'block';
+            carregarControle(perfil);
+        }
+
+        function carregarControle(perfil) {
+            document.getElementById('perfil').value = perfil;
+            document.body.className = perfil.toLowerCase();
+            inicializarControle();
+        }
+
+        function voltarParaInicio() {
+            document.getElementById('paginaInicial').style.display = 'flex';
+            document.getElementById('paginaControle').style.display = 'none';
+            document.body.className = '';
         }
 
         // Controle de Gastos
         function inicializarControle() {
-            document.getElementById('salario').value = localStorage.getItem(`${perfilSelecionado}_salario`) || 0;
+            document.getElementById('salario').value = dados[perfilAtual].salario;
             atualizarTabela();
             atualizarSaldo();
 
@@ -584,18 +442,19 @@
                 return;
             }
 
-            const gastos = JSON.parse(localStorage.getItem(`${perfilSelecionado}_gastos`)) || [];
-            gastos.push({ item, valor, data });
-            localStorage.setItem(`${perfilSelecionado}_gastos`, JSON.stringify(gastos));
-
-            atualizarTabela();
-            atualizarSaldo();
-            limparCampos();
+            if (editando) {
+                salvarEdicao(indiceEdicao);
+            } else {
+                dados[perfilAtual].gastos.push({ item, valor, data });
+                salvarDados();
+                atualizarTabela();
+                atualizarSaldo();
+                limparCampos();
+            }
         }
 
         function editarGasto(index) {
-            const gastos = JSON.parse(localStorage.getItem(`${perfilSelecionado}_gastos`)) || [];
-            const gasto = gastos[index];
+            const gasto = dados[perfilAtual].gastos[index];
             
             document.getElementById('item').value = gasto.item;
             document.getElementById('valor').value = gasto.valor;
@@ -604,6 +463,9 @@
             const btnAplicar = document.querySelector('.form-gasto button');
             btnAplicar.textContent = 'Salvar Edição';
             btnAplicar.onclick = () => salvarEdicao(index);
+            
+            editando = true;
+            indiceEdicao = index;
         }
 
         function salvarEdicao(index) {
@@ -616,14 +478,16 @@
                 return;
             }
 
-            const gastos = JSON.parse(localStorage.getItem(`${perfilSelecionado}_gastos`)) || [];
-            gastos[index] = { item, valor, data };
-            localStorage.setItem(`${perfilSelecionado}_gastos`, JSON.stringify(gastos));
-
+            dados[perfilAtual].gastos[index] = { item, valor, data };
+            
             const btnAplicar = document.querySelector('.form-gasto button');
             btnAplicar.textContent = 'Aplicar';
             btnAplicar.onclick = adicionarGasto;
-
+            
+            editando = false;
+            indiceEdicao = -1;
+            
+            salvarDados();
             atualizarTabela();
             atualizarSaldo();
             limparCampos();
@@ -631,10 +495,8 @@
 
         function excluirGasto(index) {
             if (confirm('Tem certeza que deseja excluir este gasto?')) {
-                const gastos = JSON.parse(localStorage.getItem(`${perfilSelecionado}_gastos`)) || [];
-                gastos.splice(index, 1);
-                localStorage.setItem(`${perfilSelecionado}_gastos`, JSON.stringify(gastos));
-
+                dados[perfilAtual].gastos.splice(index, 1);
+                salvarDados();
                 atualizarTabela();
                 atualizarSaldo();
             }
@@ -644,8 +506,7 @@
             const tbody = document.querySelector('#tabelaGastos tbody');
             tbody.innerHTML = '';
             
-            const gastos = JSON.parse(localStorage.getItem(`${perfilSelecionado}_gastos`)) || [];
-            gastos.forEach((gasto, index) => {
+            dados[perfilAtual].gastos.forEach((gasto, index) => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${gasto.item}</td>
@@ -662,8 +523,7 @@
 
         function atualizarSaldo() {
             const salario = parseFloat(document.getElementById('salario').value) || 0;
-            const gastos = JSON.parse(localStorage.getItem(`${perfilSelecionado}_gastos`)) || [];
-            const totalGastos = gastos.reduce((acc, gasto) => acc + gasto.valor, 0);
+            const totalGastos = dados[perfilAtual].gastos.reduce((acc, gasto) => acc + gasto.valor, 0);
             const saldo = salario - totalGastos;
 
             document.getElementById('valorSaldo').textContent = saldo.toFixed(2);
@@ -682,12 +542,18 @@
 
         function resetarDados() {
             if (confirm('Tem certeza que deseja resetar todos os dados deste perfil?')) {
-                localStorage.setItem(`${perfilSelecionado}_gastos`, JSON.stringify([]));
-                localStorage.setItem(`${perfilSelecionado}_salario`, 0);
+                dados[perfilAtual].gastos = [];
+                dados[perfilAtual].salario = 0;
                 document.getElementById('salario').value = '';
+                salvarDados();
                 atualizarTabela();
                 atualizarSaldo();
             }
+        }
+
+        function salvarDados() {
+            localStorage.setItem(`${perfilAtual}_gastos`, JSON.stringify(dados[perfilAtual].gastos));
+            localStorage.setItem(`${perfilAtual}_salario`, dados[perfilAtual].salario);
         }
 
         function limparCampos() {
@@ -697,16 +563,7 @@
         }
 
         document.getElementById('salario').addEventListener('change', () => {
-            localStorage.setItem(`${perfilSelecionado}_salario`, document.getElementById('salario').value);
+            dados[perfilAtual].salario = parseFloat(document.getElementById('salario').value);
+            salvarDados();
             atualizarSaldo();
-        });
-
-        // Carregar perfil inicial
-        if (localStorage.getItem('Pedro_pin') || localStorage.getItem('Barbara_pin')) {
-            document.getElementById('paginaInicial').style.display = 'flex';
-        } else {
-            document.getElementById('paginaInicial').style.display = 'flex';
         }
-    </script>
-</body>
-</html>
